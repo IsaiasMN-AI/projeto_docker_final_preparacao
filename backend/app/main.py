@@ -2,7 +2,11 @@ import os
 from fastapi import FastAPI
 import pymysql  # Importação do driver do MySQL
 
-app = FastAPI(title="Projeto Final Preparatório")
+# Adicione o parâmetro root_path="/api"
+app = FastAPI(
+    title="Projeto Final Preparatório",
+    root_path="/api"
+)
 
 @app.get("/")
 def read_root():
@@ -12,7 +16,7 @@ def read_root():
 def health_check():
     return {"status": "ok"}
 
-@app.get("/info")
+@app.get("/docs")
 def get_info():
     ambiente = os.getenv("APP_ENV", "development")
     return {

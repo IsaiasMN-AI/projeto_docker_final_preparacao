@@ -54,26 +54,47 @@
 
     <div class="container">
         <?php
-            // Busca a variável de ambiente APP_ENV. 
-            // Se não estiver definida, usa "development" como valor padrão.
+            // Busca a variável do ambiente e a URL interna da API
             $ambiente = getenv('APP_ENV') ?: 'development';
+            
+            // O padrão assume que o serviço da API no docker-compose se chama "api" e roda na 8000
+            $apiBaseUrl = getenv('API_BASE_URL') ?: 'http://api:8000'; 
+            
+            // --------------------------------------------------------
+            // PHP CONSUMINDO A API INTERNAMENTE
+            // --------------------------------------------------------
+            // O arroba (@) suprime warnings na tela caso a API esteja desligada
+            $apiResponse = @file_get_contents($apiBaseUrl . '/health');
+            
+            // Decodifica o JSON retornado pela API
+            $apiData = $apiResponse ? json_decode($apiResponse, true) : null;
         ?>
         
         <h1>Projeto Final Preparatório</h1>
-        
         <p><strong>Ambiente atual:</strong> <span class="ambiente"><?php echo htmlspecialchars($ambiente); ?></span></p>
         
-        <div class="mensagem">
-            🚀 Esta página PHP está rodando em um contêiner separado, servida através da comunicação entre Nginx e PHP-FPM!
+        <div class="api-box">
+            <h3>Comunicação Backend-to-Backend</h3>
+            <p>O PHP tentou consumir a API na rede interna (<code><?php echo htmlspecialchars($apiBaseUrl); ?></code>).</p>
+            
+            <?php if ($apiData && isset($apiData['status']) && $apiData['status'] === 'ok'): ?>
+                <p class="success">✅ Sucesso! A API retornou: <?php echo htmlspecialchars($apiData['status']); ?></p>
+            <?php else: ?>
+                <p class="error">❌ Falha na conexão! O PHP não conseguiu alcançar a API.</p>
+            <?php endif; ?>
         </div>
         
         <hr>
         
         <p>
             🔗 
-            <!-- Como o FastAPI padrão usa a porta 8000, apontamos para a rota automática do Swagger -->
-            <a href="http://localhost:8000/docs" target="_blank">
-                Acessar a Documentação da API (Swagger)
+            <!-- 
+              Se a porta 8000 foi fechada, o acesso direto (localhost:8000) não funciona mais.
+              De acordo com a Parte 6 do exercício, o Nginx fará um proxy da rota /api/.
+              Portanto, a documentação ficará acessível através do Nginx na porta 8080!
+            -->
+            <a href="http://10.78.0.142:8080/api/docs" target="_blank">
+                Acessar a Documentação da API (via Proxy Nginx)
             </a>
         </p>
     </div>
